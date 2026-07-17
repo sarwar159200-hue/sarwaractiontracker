@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sarwar Action Tracker</title>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+  <div id="loginView" class="login-wrap">
+    <section class="login-hero">
+      <div>
+        <div class="brand">
+          <div class="brand-mark">S</div>
+          <div><strong>SARWAR ACTION TRACKER</strong><small>Project Action & Reminder Platform</small></div>
+        </div>
+        <h1 style="font-size:48px;max-width:650px;margin-top:70px">Control actions, responsibilities, reminders, and overdue escalation from one place.</h1>
+        <p style="font-size:18px;color:#cfe0ef;max-width:620px">A backend-ready interface for engineering, procurement, construction, MDR, CRS, and contractor action management.</p>
+      </div>
+      <small>Prototype mode · Local browser data · Ready for Vercel + Supabase integration</small>
+    </section>
+    <section class="login-card-wrap">
+      <div class="login-card">
+        <h1>Welcome back</h1>
+        <div class="subtle">Sign in to access your assigned projects and actions.</div>
+        <div class="field"><label>Username or Email</label><input id="loginEmail" value="sarwar.khalid@miranenergy.com" /></div>
+        <div class="field"><label>Password</label><input id="loginPassword" type="password" value="Sarwar@123456" /></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:18px" onclick="login()">Sign In</button>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-top:14px;font-size:13px">
+          <button class="btn btn-light" style="flex:1" onclick="openRecoveryModal('password')">Forgot Password</button>
+          <button class="btn btn-light" style="flex:1" onclick="openRecoveryModal('account')">Forgot Username/Email</button>
+        </div>
+        
+      </div>
+    </section>
+  </div>
+
+  <div id="appView" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div><strong>SARWAR</strong><small>ACTION TRACKER</small></div>
+      </div>
+      <nav class="nav">
+        <a href="#" class="active" onclick="showSection('dashboard')">▦ Dashboard</a>
+        <a href="#" onclick="showSection('actions')">☑ Actions</a>
+        <a id="navUsers" href="#" onclick="showSection('users')">👥 Users & Access</a>
+        <a id="navProjects" href="#" onclick="showSection('projects')">▣ Projects</a>
+        <a href="#" onclick="showSection('emails')">✉ Email Log</a>
+        <a id="navSettings" href="#" onclick="showSection('settings')">⚙ Reminder Rules</a>
+      </nav>
+      <div class="nav-section">Workspace</div>
+      <nav class="nav">
+        <a href="#" onclick="openChangePasswordModal(false)">🔐 Change Password</a>
+        <a href="#" onclick="exportCSV()">⇩ Export CSV</a>
+        <a href="#" onclick="logout()">↪ Sign Out</a>
+      </nav>
+      <div class="sidebar-foot">
+        <strong>Prototype Mode</strong><br/>
+        Local storage is active. Backend API placeholders are included for later Vercel deployment.
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div id="pageTitle" class="page-title">Dashboard</div>
+            <div class="subtle">Overview of project actions and reminders</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <input class="search" id="globalSearch" placeholder="Search actions..." oninput="renderAll()" />
+          <button data-admin-only="1" class="icon-btn" onclick="openActionModal()">＋</button>
+          <div class="avatar" id="userAvatar">SK</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <section id="dashboardSection">
+          <div class="toolbar">
+            <div>
+              <div style="font-weight:800;font-size:18px">Action Management Overview</div>
+              <div class="subtle">Live status based on today’s date</div>
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn btn-light" onclick="sendAllOverdue()">Send Overdue Reminders</button>
+              <button data-admin-only="1" class="btn btn-primary" onclick="openActionModal()">Add New Action</button>
+            </div>
+          </div>
+
+          <div id="kpiGrid" class="kpis"></div>
+
+          <div class="card" style="margin-top:16px">
+            <div class="panel-head"><div class="panel-title">Filters</div><button class="btn btn-light" onclick="resetFilters()">Reset</button></div>
+            <div class="panel-body">
+              <div class="filters">
+                <div class="field"><label>Project</label><select id="fProject" onchange="renderAll()"></select></div>
+                <div class="field"><label>Company</label><select id="fCompany" onchange="renderAll()"></select></div>
+                <div class="field"><label>Responsible</label><select id="fOwner" onchange="renderAll()"></select></div>
+                <div class="field"><label>Status</label><select id="fStatus" onchange="renderAll()"><option value="">All</option><option>Open</option><option>In Progress</option><option>Closed</option><option>Overdue</option></select></div>
+                <div class="field"><label>Priority</label><select id="fPriority" onchange="renderAll()"><option value="">All</option><option>High</option><option>Medium</option><option>Low</option></select></div>
+                <div class="field"><label>Discipline</label><select id="fDiscipline" onchange="renderAll()"></select></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div class="panel-head"><div class="panel-title">Priority Actions</div><button class="btn btn-light" onclick="showSection('actions')">View All</button></div>
+              <div class="panel-body" style="overflow:auto"><table><thead><tr><th>ID</th><th>Action</th><th>Responsible</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody id="priorityBody"></tbody></table></div>
+            </div>
+            <div class="card">
+              <div class="panel-head"><div class="panel-title">Actions by Company</div></div>
+              <div class="panel-body"><div id="companyBars" class="chart-bars"></div></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div class="panel-head"><div class="panel-title">Recent Activity</div></div>
+              <div class="panel-body"><div id="activityList" class="activity-list"></div></div>
+            </div>
+            <div class="card">
+              <div class="panel-head"><div class="panel-title">Reminder Summary</div></div>
+              <div class="panel-body"><div id="reminderSummary"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="actionsSection" class="hidden">
+          <div class="toolbar">
+            <div><div style="font-weight:800;font-size:18px">All Actions</div><div class="subtle">Create, edit, assign, remind, and close actions</div></div>
+            <button data-admin-only="1" class="btn btn-primary" onclick="openActionModal()">Add New Action</button>
+          </div>
+          <div class="card"><div class="panel-body" style="overflow:auto"><table><thead><tr><th>ID</th><th>Project</th><th>Title</th><th>Company</th><th>Assigned To</th><th>Due Date</th><th>Priority</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead><tbody id="allActionsBody"></tbody></table></div></div>
+        </section>
+
+        <section id="usersSection" class="hidden">
+          <div class="toolbar">
+            <div><div style="font-weight:800;font-size:18px">Users & Access</div><div class="subtle">Create users with username, password, role, and project access</div></div>
+            <button data-admin-only="1" class="btn btn-primary" onclick="openUserModal()">Add User</button>
+          </div>
+          <div class="card"><div class="panel-body" style="overflow:auto"><table><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Company</th><th>Role</th><th>Project Access</th><th>Status</th><th>Actions</th></tr></thead><tbody id="usersBody"></tbody></table></div></div>
+        </section>
+
+        <section id="projectsSection" class="hidden">
+          <div class="toolbar">
+            <div><div style="font-weight:800;font-size:18px">Projects</div><div class="subtle">Manage project workspaces and members</div></div>
+            <button data-admin-only="1" class="btn btn-primary" onclick="openProjectModal()">Add Project</button>
+          </div>
+          <div id="projectsGrid" class="kpis"></div>
+        </section>
+
+        <section id="emailsSection" class="hidden">
+          <div class="toolbar"><div><div style="font-weight:800;font-size:18px">Email Log</div><div class="subtle">History of reminders, escalations, invitations, and assignment emails. “Pending Backend” means Vercel email API is not connected yet.</div></div></div>
+          <div class="card"><div class="panel-body" style="overflow:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Recipient</th><th>Subject</th><th>Related Item</th><th>Status</th></tr></thead><tbody id="emailBody"></tbody></table></div></div>
+        </section>
+
+        <section id="settingsSection" class="hidden">
+          <div class="toolbar"><div><div style="font-weight:800;font-size:18px">Reminder Rules</div><div class="subtle">Configure automated reminder and escalation timing</div></div></div>
+          <div class="card"><div class="panel-body">
+            <div class="form-grid">
+              <div class="field"><label>First Reminder (days before due)</label><input id="rBefore" type="number" value="3"></div>
+              <div class="field"><label>Due Today Reminder</label><select id="rToday"><option>Enabled</option><option>Disabled</option></select></div>
+              <div class="field"><label>First Escalation (days overdue)</label><input id="rEsc1" type="number" value="3"></div>
+              <div class="field"><label>Second Escalation (days overdue)</label><input id="rEsc2" type="number" value="7"></div>
+              <div class="field"><label>Default Escalation Email</label><input id="rEscEmail" value="project.manager@example.com"></div>
+              <div class="field"><label>Daily Reminder Time</label><input id="rTime" type="time" value="08:00"></div>
+              <div class="field full"><label>Email Footer</label><textarea id="rFooter" rows="4">Regards,
+Sarwar Action Tracker</textarea></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:16px" onclick="saveSettings()">Save Rules</button>
+          </div></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="actionModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head"><strong id="actionModalTitle">Add Action</strong><button class="icon-btn" onclick="closeModal('actionModal')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <input type="hidden" id="aId">
+          <div class="field"><label>Project</label><select id="aProject"></select></div>
+          <div class="field"><label>Company</label><input id="aCompany" placeholder="Enerflex, ILF, ENKA..."></div>
+          <div class="field full"><label>Action Title</label><input id="aTitle" placeholder="Describe the required action"></div>
+          <div class="field full"><label>Description</label><textarea id="aDescription" rows="3"></textarea></div>
+          <div class="field"><label>Assigned User</label><select id="aOwner"></select></div>
+          <div class="field"><label>Responsible Email</label><input id="aEmail" type="email"></div>
+          <div class="field"><label>Discipline</label><input id="aDiscipline" placeholder="Engineering"></div>
+          <div class="field"><label>Priority</label><select id="aPriority"><option>High</option><option selected>Medium</option><option>Low</option></select></div>
+          <div class="field"><label>Due Date</label><input id="aDue" type="date"></div>
+          <div class="field"><label>Status</label><select id="aStatus"><option>Open</option><option>In Progress</option><option>Closed</option></select></div>
+          <div class="field"><label>Progress %</label><input id="aProgress" type="number" min="0" max="100" value="0"></div>
+          <div class="field"><label>Escalation Email</label><input id="aEscalation" type="email" placeholder="manager@example.com"></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+          <button class="btn btn-light" onclick="closeModal('actionModal')">Cancel</button>
+          <button class="btn btn-primary" onclick="saveAction()">Save Action</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="userModal" class="modal hidden">
+    <div class="modal-card" style="width:min(650px,96vw)">
+      <div class="modal-head"><strong>Invite User</strong><button class="icon-btn" onclick="closeModal('userModal')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>Full Name</label><input id="uName"></div>
+          <div class="field"><label>Username</label><input id="uUsername"></div>
+          <div class="field"><label>Email</label><input id="uEmail" type="email"></div>
+          <div class="field"><label>Temporary Password</label><input id="uPassword" type="text"></div>
+          <div class="field"><label>Recovery Email</label><input id="uRecoveryEmail" type="email"></div>
+          <div class="field full"><div class="login-note" style="display:block">The temporary password will be emailed to the new user. They will be required to change it after first login.</div></div>
+          <div class="field"><label>Company</label><input id="uCompany"></div>
+          <div class="field"><label>Role</label><select id="uRole"><option>System Administrator</option><option>Project Manager</option><option>Action Owner</option><option>Viewer</option><option>External Contractor</option></select></div>
+          <div class="field full"><label>Project Access</label><select id="uProject"></select></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+          <button class="btn btn-light" onclick="closeModal('userModal')">Cancel</button>
+          <button class="btn btn-primary" onclick="inviteUser()">Create User</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="projectModal" class="modal hidden">
+    <div class="modal-card" style="width:min(620px,96vw)">
+      <div class="modal-head"><strong>Add Project</strong><button class="icon-btn" onclick="closeModal('projectModal')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>Project Code</label><input id="pCode"></div>
+          <div class="field"><label>Project Name</label><input id="pName"></div>
+          <div class="field"><label>Client</label><input id="pClient"></div>
+          <div class="field"><label>Project Manager</label><input id="pManager"></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+          <button class="btn btn-light" onclick="closeModal('projectModal')">Cancel</button>
+          <button class="btn btn-primary" onclick="saveProject()">Save Project</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="recoveryModal" class="modal hidden">
+    <div class="modal-card" style="width:min(560px,96vw)">
+      <div class="modal-head"><strong id="recoveryTitle">Account Recovery</strong><button class="icon-btn" onclick="closeModal('recoveryModal')">✕</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="recoveryMode">
+        <div class="field">
+          <label id="recoveryLabel">Username or Email</label>
+          <input id="recoveryIdentifier" placeholder="Enter username or registered email">
+        </div>
+        <div class="login-note" style="display:block;margin-top:14px">
+          For security, the system sends a reset link or account reminder to the registered recovery email. Existing passwords are never revealed.
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+          <button class="btn btn-light" onclick="closeModal('recoveryModal')">Cancel</button>
+          <button class="btn btn-primary" onclick="submitRecovery()">Send Recovery Email</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="changePasswordModal" class="modal hidden">
+    <div class="modal-card" style="width:min(560px,96vw)">
+      <div class="modal-head"><strong>Change Password</strong><button id="changePasswordClose" class="icon-btn" onclick="closeModal('changePasswordModal')">✕</button></div>
+      <div class="modal-body">
+        <div class="field"><label>Current Password</label><input id="cpCurrent" type="password"></div>
+        <div class="field"><label>New Password</label><input id="cpNew" type="password"></div>
+        <div class="field"><label>Confirm New Password</label><input id="cpConfirm" type="password"></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+          <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
